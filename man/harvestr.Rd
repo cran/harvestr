@@ -7,6 +7,22 @@
 \description{
   \code{harvestr} package
 }
+\section{Caching}{
+  The functions in \code{harvestr} can cache results for
+  faster and interuptible simulations.  This option
+  defaults to \code{FALSE} but can be chosen by specifying
+  the \code{cache} parameter in any of the functions that
+  produce results.
+
+  The caching is performed by saving a RData file in a
+  specified caching directory.  The default directory is
+  named "harvestr-cache" and resides under the
+  \link[base:getwd]{working directory}.  This can be
+  specified by setting the \code{harvestr.cache.dir}
+  \code{\link{option}}.  Files in this directory use file
+  names derived from hashes of the expression to evaluate.
+  Do not modify the file names.
+}
 \author{
   Andrew Redd <amredd_at_gmail.com>
 

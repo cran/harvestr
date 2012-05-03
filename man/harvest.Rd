@@ -2,7 +2,7 @@
 \alias{harvest}
 \title{Harvest results}
 \usage{
-  harvest(.list, fun, ..., .parallel = F)
+  harvest(.list, fun, ..., cache = FALSE, .parallel = F)
 }
 \arguments{
   \item{.list}{a list of \code{data.frame}s See details.}
@@ -10,6 +10,9 @@
   \item{fun}{a function to apply}
 
   \item{...}{passed to \code{fun}}
+
+  \item{cache}{use cache, see Caching in
+  \code{link{harvestr}}}
 
   \item{.parallel}{should the computations be run in
   parallel?}

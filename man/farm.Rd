@@ -2,7 +2,7 @@
 \alias{farm}
 \title{Evaluate an expression for a set of seeds}
 \usage{
-  farm(seeds, expr, envir = parent.frame(),
+  farm(seeds, expr, envir = parent.frame(), cache = FALSE,
     .parallel = FALSE)
 }
 \arguments{
@@ -17,6 +17,9 @@
 
   \item{.parallel}{should the computations be run in
   parallel?}
+
+  \item{cache}{use cache, see Caching in
+  \code{link{harvestr}}}
 }
 \description{
   Evaluate an expression for a set of seeds
