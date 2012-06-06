@@ -24,4 +24,9 @@
 \description{
   Evaluate an expression for a set of seeds
 }
+\seealso{
+  Other harvest: \code{\link{gather}}, \code{\link{graft}},
+  \code{\link{harvest}}, \code{\link{noattr}},
+  \code{\link{plant}}, \code{\link{sprout}}
+}
 

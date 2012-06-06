@@ -18,7 +18,7 @@
   Call a function continuing the random number stream.
 }
 \seealso{
-  \code{\link{withpseed}}, \code{\link{harvest}}, and
+  \code{\link{withseed}}, \code{\link{harvest}}, and
   \code{\link{with}}
 }
 

@@ -10,4 +10,9 @@
 \description{
   Strip attributes
 }
+\seealso{
+  Other harvest: \code{\link{farm}}, \code{\link{gather}},
+  \code{\link{graft}}, \code{\link{harvest}},
+  \code{\link{plant}}, \code{\link{sprout}}
+}
 

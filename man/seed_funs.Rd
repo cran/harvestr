@@ -2,20 +2,18 @@
 \alias{get.seed}
 \alias{GetOrSetSeed}
 \alias{replace.seed}
-\alias{withpseed}
 \alias{withseed}
 \title{Do a computation with a given seed.}
 \usage{
-  withseed(seed, expr, envir = parent.frame())
+  withseed(seed, expr, envir = parent.frame(),
+    cache = getOption("harvestr.use.cache", FALSE),
+    time = getOption("harvestr.time", FALSE))
 
   get.seed()
 
   replace.seed(seed, delete = TRUE)
 
   GetOrSetSeed()
-
-  withpseed(seed, expr, envir = parent.frame(),
-    cache = FALSE)
 }
 \arguments{
   \item{seed}{a valid seed value}
@@ -25,9 +23,12 @@
   \item{envir}{the \code{\link{environment}} to evaluate
   the code in.}
 
-  \item{delete}{logical to delete if \code{seed} is null.}
+  \item{cache}{should results be cached or retrieved from
+  cache.}
 
-  \item{cache}{use cache, see Caching in \link{harvestr}}
+  \item{time}{should results be timed?}
+
+  \item{delete}{logical to delete if \code{seed} is null.}
 }
 \value{
   the .Random.seed if defined, otherwise NULL
@@ -52,12 +53,6 @@
 
   Always returns a valid seed. Useful for grabbing a seed
   used to generate a random object.
-
-  \code{withpseed} is the same as withseed, but assumes a
-  parallel seed from \code{\link[rsprng]{spawn.sprng}}.
-  When evaluated the beginning and endind seeds are saved
-  in the attributes "starting.seed" and "ending.seed", for
-  continued evaluation with \code{\link{harvest}}
 }
 \note{
   Not parallel compatible, this modifies the global

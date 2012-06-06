@@ -24,7 +24,12 @@
   harvest is functionaly equivalant to llply, but takes on
   additional capability when used with the other functions
   from this package.  When an object comes from
-  \code{\link{withpseed}} the ending seed is extacted and
+  \code{\link{withseed}} the ending seed is extacted and
   used to continue evaluation.
+}
+\seealso{
+  Other harvest: \code{\link{farm}}, \code{\link{gather}},
+  \code{\link{graft}}, \code{\link{noattr}},
+  \code{\link{plant}}, \code{\link{sprout}}
 }
 

@@ -16,6 +16,7 @@
   Use a reference class method
 }
 \examples{
+library(harvestr)
 library(plyr)
 mr <- setRefClass("HelloWorld",
   fields = list(
