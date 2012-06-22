@@ -1,8 +1,8 @@
 \name{harvest}
 \alias{harvest}
-\title{Harvest results}
+\title{Harvest the results.}
 \usage{
-  harvest(.list, fun, ..., cache = FALSE, .parallel = F)
+  harvest(.list, fun, ..., .parallel = F)
 }
 \arguments{
   \item{.list}{a list of \code{data.frame}s See details.}
@@ -11,14 +11,11 @@
 
   \item{...}{passed to \code{fun}}
 
-  \item{cache}{use cache, see Caching in
-  \code{link{harvestr}}}
-
   \item{.parallel}{should the computations be run in
   parallel?}
 }
 \description{
-  Harvest results
+  Harvest the results.
 }
 \details{
   harvest is functionaly equivalant to llply, but takes on
@@ -29,7 +26,7 @@
 }
 \seealso{
   Other harvest: \code{\link{farm}}, \code{\link{gather}},
-  \code{\link{graft}}, \code{\link{noattr}},
-  \code{\link{plant}}, \code{\link{sprout}}
+  \code{\link{graft}}, \code{\link{plant}},
+  \code{\link{sprout}}
 }
 

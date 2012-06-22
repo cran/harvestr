@@ -45,12 +45,14 @@
 withseed <- function(seed, expr, envir=parent.frame()
                     , cache = getOption('harvestr.use.cache', FALSE)
                     , time  = getOption('harvestr.time', FALSE)){
+  oldseed <- get.seed()
+  on.exit(replace.seed(oldseed))
+  se <- substitute(expr)
   if(cache){
     cache.dir <- getOption("harvestr.cache.dir", "harvestr-cache")
     expr.md5 <- attr(cache, 'expr.md5')
     parent.call <- sys.call(-1)[[1]]
     if(is.null(expr.md5)){
-      se <- substitute(expr)
       if(is.call(se))
         expr.md5 <- digest(se , 'md5')
       else
@@ -64,15 +66,18 @@ withseed <- function(seed, expr, envir=parent.frame()
       return(result)
     }
   }
-  oldseed <- get.seed()
-  oldkind <- RNGkind()
-  on.exit(do.call(RNGkind, as.list(oldkind)), add=T)
-  on.exit(replace.seed(oldseed), add=T)
-  RNGkind("L'Ecuyer-CMRG", "Inversion")
-  set.seed(seed)
-  fun <- if(is.name(substitute(expr)) && is.function(expr)){
-    stopifnot(is.null(formals(expr)))
-    expr
+  # RNGkind("L'Ecuyer-CMRG", "Inversion")
+  # set.seed(seed, "L'Ecuyer-CMRG", "Inversion")
+  replace.seed(seed)
+  fun <- if(is.name(se)){
+    if(is.function(expr)){
+        stopifnot(is.null(formals(expr)))
+        expr
+    } else if(is.call(expr)) {
+        as.function(list(expr), envir=envir)
+    } else {
+        eval(substitute(function()expr), envir=envir)
+    }
   } else {
     eval(substitute(function()expr), envir=envir)
   }
@@ -111,9 +116,10 @@ get.seed <- function(){
 #' @export
 replace.seed <- function(seed, delete=TRUE){
   if(is.null(seed)){
-    remove(.Random.seed, envir=.GlobalEnv)
+    if(delete)
+      remove('.Random.seed', envir=.GlobalEnv)
   } else {
-    assign('.Random.seed', seed, envir=.GlobalEnv) 
+    assign('.Random.seed', noattr(seed), envir=.GlobalEnv) 
   }
 }
 
@@ -125,7 +131,6 @@ replace.seed <- function(seed, delete=TRUE){
 #' Useful for grabbing a seed used to generate a random object.
 #' 
 #' @return a valid .Random.seed value.
-#' @export
 GetOrSetSeed<-function(){
   if(is.null(get.seed())) runif(1)
   seed <- .Random.seed

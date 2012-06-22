@@ -27,9 +27,9 @@
   Andrew Redd <amredd_at_gmail.com>
 
   The harvestr package is a framework for parallel
-  reproducible simulations based off the package
-  \code{\link[rsprng:spawn.new.sprng]{rsprng}}. The
-  functions to know about are: \enumerate{ \item
+  reproducible simulations.
+
+  The functions to know about are: \enumerate{ \item
   \code{\link{gather}} - which gathers parallel seeds.
   \item \code{\link{farm}} - which uses the saved seeds
   from gather to replicate an expression, once for each
@@ -39,6 +39,8 @@
   \code{\link{reap}} - is used by harvest for a single item
   \item \code{\link{plant}} - is used to set seeds for a
   list of predefined objects so that harvest can be used on
-  it. }
+  it.  \item \code{\link{sprout}} - Generate independent
+  sub-streams.  \item \code{\link{graft}} - Replicate and
+  object in independent substreams of random numbers. }
 }
 

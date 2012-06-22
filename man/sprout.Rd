@@ -11,13 +11,20 @@
   \item{n}{number of new streams to create.}
 }
 \description{
-  Create substreams of numbers based of a current stream.
+  Seeds from \code{\link{gather}} can be used to generate
+  another set of independent streams.  These seeds can be
+  given to \code{\link{graft}}
+}
+\details{
+  As a convenience \code{seed} can be an object that has a
+  seed attached, ie. the result of any \code{harvestr}
+  function.
 }
 \seealso{
   \code{\link{nextRNGSubStream}}
 
   Other harvest: \code{\link{farm}}, \code{\link{gather}},
   \code{\link{graft}}, \code{\link{harvest}},
-  \code{\link{noattr}}, \code{\link{plant}}
+  \code{\link{plant}}
 }
 

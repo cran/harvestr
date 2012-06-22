@@ -1,6 +1,6 @@
 \name{noattr}
 \alias{noattr}
-\title{Strip attributes}
+\title{Strip attributes from an object.}
 \usage{
   noattr(x)
 }
@@ -8,11 +8,9 @@
   \item{x,}{any object}
 }
 \description{
-  Strip attributes
+  Strip attributes from an object.
 }
 \seealso{
-  Other harvest: \code{\link{farm}}, \code{\link{gather}},
-  \code{\link{graft}}, \code{\link{harvest}},
-  \code{\link{plant}}, \code{\link{sprout}}
+  \link{attributes}
 }
 

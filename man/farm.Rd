@@ -1,8 +1,9 @@
 \name{farm}
 \alias{farm}
-\title{Evaluate an expression for a set of seeds}
+\title{Evaluate an expression for a set of seeds.}
 \usage{
-  farm(seeds, expr, envir = parent.frame(), cache = FALSE,
+  farm(seeds, expr, envir = parent.frame(), ...,
+    cache = getOption("harvestr.use.cache", FALSE),
     .parallel = FALSE)
 }
 \arguments{
@@ -15,18 +16,25 @@
   \item{envir}{an environment within which to evaluate
   \code{expr}.}
 
+  \item{...}{extra arguments}
+
+  \item{cache}{should cached results be used or generated?}
+
   \item{.parallel}{should the computations be run in
   parallel?}
-
-  \item{cache}{use cache, see Caching in
-  \code{link{harvestr}}}
 }
 \description{
-  Evaluate an expression for a set of seeds
+  For each seed, set the seed, then evaluate the
+  expression. The \code{farm} function is used to generate
+  data. The Seeds for the state of the random numbrer
+  generator is stored in the attribute
+  \code{'ending.seed'}, and will be used by harvestr
+  functions for any other random number generation that is
+  needed.
 }
 \seealso{
   Other harvest: \code{\link{gather}}, \code{\link{graft}},
-  \code{\link{harvest}}, \code{\link{noattr}},
-  \code{\link{plant}}, \code{\link{sprout}}
+  \code{\link{harvest}}, \code{\link{plant}},
+  \code{\link{sprout}}
 }
 

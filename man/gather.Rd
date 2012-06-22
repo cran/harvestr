@@ -14,19 +14,18 @@
   \item{...}{passed on}
 
   \item{.starting}{if TRUE starting seeds with be gathered
-  rather than ending seeds.
-
-  Equivalant to \code{\link[rsprng]{spawn.new.sprng}} when
-  x is a number.}
+  rather than ending seeds.}
 }
 \description{
-  Gather independent seeds.
+  Collect seeds representing independent random number
+  streams. These seeds can them be used in
+  \code{\link{farm}} or \code{\link{plant}}.
 }
 \seealso{
   \link{RNG}
 
   Other harvest: \code{\link{farm}}, \code{\link{graft}},
-  \code{\link{harvest}}, \code{\link{noattr}},
-  \code{\link{plant}}, \code{\link{sprout}}
+  \code{\link{harvest}}, \code{\link{plant}},
+  \code{\link{sprout}}
 }
 
