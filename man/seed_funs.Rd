@@ -1,6 +1,6 @@
 \name{withseed}
-\alias{get.seed}
 \alias{GetOrSetSeed}
+\alias{get.seed}
 \alias{replace.seed}
 \alias{withseed}
 \title{Do a computation with a given seed.}

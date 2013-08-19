@@ -1,0 +1,18 @@
+\name{bale}
+\alias{bale}
+\title{Combine results into a data frame}
+\usage{
+  bale(l, .check = T)
+}
+\arguments{
+  \item{l}{a list, from a harvestr function.}
+
+  \item{.check}{should checks be run on the object.}
+}
+\description{
+  Combine results into a data frame
+}
+\seealso{
+  ldply
+}
+

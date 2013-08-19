@@ -64,7 +64,7 @@ function(x, seed=get.seed(), ..., .starting=F){
         r <-
         seeds[[i]] <-  structure(nextRNGStream(r), RNGlevel='stream')
     }
-    seeds
+    structure(seeds, class=c('rng-seeds', 'list'))
   } else {
     stop("x must be either a list or integer")
   }
@@ -117,11 +117,13 @@ sprout <- function(seed, n) {
 #' @param fun a function to call on object
 #' @param ... passed onto function
 #' @param cache use cache, see Caching in \code{\link{harvestr}}
+#' @param time should results be timed?
 #' 
 #' @seealso \code{\link{withseed}}, \code{\link{harvest}}, and \code{\link{with}}
 #' @export
 reap <-
-function(x, fun, ..., cache=getOption('harvestr.use.cache', FALSE)) {
+function(x, fun, ..., cache = getOption('harvestr.use.cache', FALSE)
+                    , time  = getOption('harvestr.time', FALSE)) {
   seed <- attr(x, "ending.seed")
   if(is.null(seed))
     stop("Could not find a seed value associated with x")
@@ -129,8 +131,12 @@ function(x, fun, ..., cache=getOption('harvestr.use.cache', FALSE)) {
     cache <- structure(cache, 
       expr.md5 = digest(list(x, fun, source="harvestr::reap"), "md5"))
   }
-  f <- function(){fun(x,...)}
-  withseed(seed, f, cache=cache)
+  f <- if(getOption('harvestr.use.try', TRUE)) {
+    function(){try(fun(x,...), getOption('harvestr.try.silent', FALSE))}
+  } else {
+    function(){fun(x,...)}
+  }
+  withseed(seed, f, cache=cache, time=time)
 }
 
 #' Evaluate an expression for a set of seeds.
@@ -146,14 +152,17 @@ function(x, fun, ..., cache=getOption('harvestr.use.cache', FALSE)) {
 #' @param envir an environment within which to evaluate \code{expr}.
 #' @param ... extra arguments
 #' @param cache should cached results be used or generated?
+#' @param time should results be timed?
 #' @param .parallel should the computations be run in parallel?
 #' 
-#' @importFrom plyr llply
+#' @importFrom plyr llply ldply
 #' @family harvest
 #' @export
 farm <-
 function(seeds, expr, envir = parent.frame(), ...
-    , cache=getOption('harvestr.use.cache', FALSE), .parallel=FALSE){
+        , cache     = getOption('harvestr.use.cache', FALSE)
+        , time      = getOption('harvestr.time'     , FALSE)
+        , .parallel = getOption('harvestr.parallel' , FALSE)){
   if(is.numeric(seeds) && length(seeds)==1)
     seeds <- gather(seeds)
   fun <- if(is.name(substitute(expr)) && is.function(expr)){
@@ -162,8 +171,15 @@ function(seeds, expr, envir = parent.frame(), ...
   } else {
     substitute(expr)
   }
-  llply(.data=seeds, .fun=withseed, fun, envir=envir, ...
-        , cache=cache, .parallel=.parallel)
+  results <- llply(.data=seeds, .fun=withseed, fun, envir=envir, ...
+                  , cache=cache, time=time, .parallel=.parallel)
+  if(time){
+      attributes(results)$time <- total_time(results)
+  }
+  structure( results
+           , 'function' = 'harvestr::farm'
+           , class = c('harvestr-datasets', 'list')
+           )
 }
 
 
@@ -171,6 +187,7 @@ function(seeds, expr, envir = parent.frame(), ...
 #' @param .list a list of \code{data.frame}s  See details.
 #' @param fun a function to apply
 #' @param ... passed to \code{fun}
+#' @param time should results be timed?
 #' @param .parallel should the computations be run in parallel?
 #' 
 #' @details
@@ -182,8 +199,31 @@ function(seeds, expr, envir = parent.frame(), ...
 #' @family harvest
 #' @export
 harvest <-
-function(.list, fun, ..., .parallel=F) {
-  llply(.list, reap, fun, ..., .parallel=.parallel)
+function(.list, fun, ...
+        , time      = getOption('harvestr.time'     , FALSE)
+        , .parallel = getOption('harvestr.parallel' , FALSE)){
+  results <- llply(.list, reap, fun, ..., time =time,  .parallel=.parallel)
+  if(getOption('harvestr.try.summary', TRUE)) try_summary(results)
+  if(time){
+      attributes(results)$time <- total_time(results)
+  }
+  structure( results
+           , 'function' = 'harvestr::harvest'
+           , class = c('harvestr-results', 'list')
+           )
+}
+
+is_try_error <- function(x)inherits(x, 'try-error')
+get_message <- function(e)attr(e, 'condition')$message
+try_summary <- function(results){
+    errors <- Filter(is_try_error, results)
+    if(length(errors)){
+        errors <- sapply(errors, get_message)
+        cat(sprintf("%d of %d (%3.2g%%) calls produced errors"
+                    , length(errors) , length(results)
+                    , length(errors) / length(results) * 100), "\n\n")
+        print(table(errors))
+    }
 }
 
 #' Strip attributes from an object.
@@ -213,13 +253,15 @@ noattr <- noattributes <- function(x) {
 #' @export
 plant <-
 function(.list, seeds=gather(length(.list))) {
-  stopifnot(is.list(.list))
-  n <- length(.list)
-  stopifnot(n == length(seeds))
-  for(i in seq_len(n)){
-    attr(.list[[i]],'ending.seed') <- seeds[[i]]
-  }
-  return(.list)
+    if(inherits(.list, 'data.frame'))
+        .list <- mlply(.list, data.frame)
+    stopifnot(inherits(.list, 'list'))
+    n <- length(.list)
+    stopifnot(n == length(seeds))
+    for(i in seq_len(n)){
+        attr(.list[[i]],'ending.seed') <- seeds[[i]]
+    }
+    return(.list)
 }
 
 #' @rdname plant
@@ -231,7 +273,51 @@ function(.list, seeds=gather(length(.list))) {
 #' 
 #' @param x an objects that already has seeds.
 #' @param n number of seeds to create
+#' @family harvest
 #' @export
 graft <-
 function(x, n, seeds = sprout(x, n)) 
     plant(replicate(length(seeds), x, F), seeds)
+
+    
+#' Apply over rows of a data frame
+#' 
+#' @param df    a data frame of parameters
+#' @param f     a function
+#' @param ...   additional parameters
+#' @param seeds seeds to use.
+#' 
+#' @return a list with f applied to each row of df.
+#' 
+#' @importFrom plyr splat
+#' @export
+plow  <-
+function(df, f, ..., seeds=gather(nrow(df))){
+    parameters <- plant(df, seeds=seeds)
+    harvest(parameters, splat(f), ...)
+}
+
+#' Combine results into a data frame
+#' 
+#' @param l a list, from a harvestr function.
+#' @param .check should checks be run on the object.
+#' 
+#' @seealso ldply
+#' 
+#' @export
+bale <- 
+function(l, .check=T){
+    if(.check){
+        stopifnot( is_homo(l)
+                 , inherits(l, 'list')
+                 , length(l)
+                 )
+        if(!inherits(l, 'harvestr::results'))
+            warning('bale is intended to be used with harvestr results but got a ', class(l))
+    }
+    ldply(l, if(inherits(l[[1]], 'harvestr-results')) bale else I)
+}
+
+
+
+

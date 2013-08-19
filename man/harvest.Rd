@@ -2,7 +2,9 @@
 \alias{harvest}
 \title{Harvest the results.}
 \usage{
-  harvest(.list, fun, ..., .parallel = F)
+  harvest(.list, fun, ...,
+    time = getOption("harvestr.time", FALSE),
+    .parallel = getOption("harvestr.parallel", FALSE))
 }
 \arguments{
   \item{.list}{a list of \code{data.frame}s See details.}
@@ -10,6 +12,8 @@
   \item{fun}{a function to apply}
 
   \item{...}{passed to \code{fun}}
+
+  \item{time}{should results be timed?}
 
   \item{.parallel}{should the computations be run in
   parallel?}

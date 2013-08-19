@@ -3,7 +3,8 @@
 \title{Call a function continuing the random number stream.}
 \usage{
   reap(x, fun, ...,
-    cache = getOption("harvestr.use.cache", FALSE))
+    cache = getOption("harvestr.use.cache", FALSE),
+    time = getOption("harvestr.time", FALSE))
 }
 \arguments{
   \item{x}{an object}
@@ -14,6 +15,8 @@
 
   \item{cache}{use cache, see Caching in
   \code{\link{harvestr}}}
+
+  \item{time}{should results be timed?}
 }
 \description{
   The \code{reap} function is the central function to

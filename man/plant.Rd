@@ -29,5 +29,8 @@
 \seealso{
   Other harvest: \code{\link{farm}}, \code{\link{gather}},
   \code{\link{harvest}}, \code{\link{sprout}}
+
+  Other harvest: \code{\link{farm}}, \code{\link{gather}},
+  \code{\link{harvest}}, \code{\link{sprout}}
 }
 

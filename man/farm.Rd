@@ -4,7 +4,8 @@
 \usage{
   farm(seeds, expr, envir = parent.frame(), ...,
     cache = getOption("harvestr.use.cache", FALSE),
-    .parallel = FALSE)
+    time = getOption("harvestr.time", FALSE),
+    .parallel = getOption("harvestr.parallel", FALSE))
 }
 \arguments{
   \item{seeds}{a list of seeds can be obtained though
@@ -19,6 +20,8 @@
   \item{...}{extra arguments}
 
   \item{cache}{should cached results be used or generated?}
+
+  \item{time}{should results be timed?}
 
   \item{.parallel}{should the computations be run in
   parallel?}
