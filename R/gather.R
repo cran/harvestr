@@ -50,8 +50,8 @@ function(x, seed=get.seed(), ..., .starting=F){
   on.exit(replace.seed(oldseed))
   if(is.list(x)){
     seeds <- lapply(x, attr, ifelse(.starting,"starting.seed", "ending.seed"))
-    if(any(sapply(seeds, is.null)))
-      stop("Malformed list.")
+    if(any(sapply(seeds, is.null))) stop("Malformed list.")
+    seeds
   } else if(is.numeric(x) && isTRUE(all.equal(x,ceiling(x)))){
     if(!is.null(seed)) {
         set.seed(seed, kind="L'Ecuyer-CMRG", normal.kind="Inversion")
@@ -113,30 +113,34 @@ sprout <- function(seed, n) {
 #' 
 #' The function calling works the same as the \link{apply} family of functions.
 #' 
-#' @param x an object
-#' @param fun a function to call on object
-#' @param ... passed onto function
-#' @param cache use cache, see Caching in \code{\link{harvestr}}
-#' @param time should results be timed?
+#' @param x         an object
+#' @param fun       a function to call on object
+#' @param ...       passed onto function
+#' @param hash      hash of the list to retrieve the cache from.
+#' @param cache     use cache, see Caching in \code{\link{harvestr}}
+#' @param cache.dir directory for the cache.
+#' @param time      should results be timed?
 #' 
 #' @seealso \code{\link{withseed}}, \code{\link{harvest}}, and \code{\link{with}}
 #' @export
 reap <-
-function(x, fun, ..., cache = getOption('harvestr.use.cache', FALSE)
-                    , time  = getOption('harvestr.time', FALSE)) {
+function( x, fun, ...
+        , hash      = digest(list(x, fun, ..., source="harvestr::reap"), "md5")
+        , cache     = getOption('harvestr.use.cache', FALSE)
+        , cache.dir = getOption("harvestr.cache.dir", "harvestr-cache")
+        , time      = getOption('harvestr.time', FALSE)) {
   seed <- attr(x, "ending.seed")
   if(is.null(seed))
     stop("Could not find a seed value associated with x")
   if(cache){
-    cache <- structure(cache, 
-      expr.md5 = digest(list(x, fun, source="harvestr::reap"), "md5"))
+    cache <- structure(cache, expr.md5 = hash)
   }
   f <- if(getOption('harvestr.use.try', TRUE)) {
     function(){try(fun(x,...), getOption('harvestr.try.silent', FALSE))}
   } else {
     function(){fun(x,...)}
   }
-  withseed(seed, f, cache=cache, time=time)
+  withseed(seed, f, cache=cache, cache.dir=cache.dir, time=time)
 }
 
 #' Evaluate an expression for a set of seeds.

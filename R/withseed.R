@@ -27,11 +27,12 @@
 
 #' Do a computation with a given seed.
 #' @rdname seed_funs
-#' @param seed  a valid seed value
-#' @param expr expression to evaluate.
-#' @param envir the \code{\link{environment}} to evaluate the code in. 
-#' @param cache should results be cached or retrieved from cache.
-#' @param time should results be timed?
+#' @param seed      a valid seed value
+#' @param expr      expression to evaluate.
+#' @param envir     the \code{\link{environment}} to evaluate the code in. 
+#' @param cache     should results be cached or retrieved from cache.
+#' @param cache.dir Where should cached results be saved to/retrieve from.
+#' @param time      should results be timed?
 #' 
 #' @details
 #' Compute the expr with the given seed, replacing the global seed after compuatations
@@ -43,13 +44,14 @@
 #' @seealso \code{\link{set.seed}}
 #' @export
 withseed <- function(seed, expr, envir=parent.frame()
-                    , cache = getOption('harvestr.use.cache', FALSE)
-                    , time  = getOption('harvestr.time', FALSE)){
+                    , cache     = getOption('harvestr.use.cache', FALSE)
+                    , cache.dir = getOption("harvestr.cache.dir", "harvestr-cache")
+                    , time      = getOption('harvestr.time', FALSE)
+                    ){
   oldseed <- get.seed()
   on.exit(replace.seed(oldseed))
   se <- substitute(expr)
   if(cache){
-    cache.dir <- getOption("harvestr.cache.dir", "harvestr-cache")
     expr.md5 <- attr(cache, 'expr.md5')
     parent.call <- sys.call(-1)[[1]]
     if(is.null(expr.md5)){
