@@ -62,7 +62,11 @@ function(x, seed=get.seed(), ..., .starting=F){
     seeds <- vector('list', x)
     for(i in seq_len(x)) {
         r <-
-        seeds[[i]] <-  structure(nextRNGStream(r), RNGlevel='stream')
+        seeds[[i]] <-  
+            structure( nextRNGStream(r)
+                     , RNGlevel='stream'
+                     , class=c("rng-seed", "integer")
+                     )
     }
     structure(seeds, class=c('rng-seeds', 'list'))
   } else {
@@ -95,12 +99,13 @@ sprout <- function(seed, n) {
         warning(paste('RNG seed provided si already a substream seed,'
                      ,'independence of streams not guaranteed.'))
     }
-    
     seeds <- replicate(n, simplify=FALSE, {
-        seed <<- structure(nextRNGSubStream(seed)
-                          , RNGlevel = 'substream')
+        seed <<- structure( nextRNGSubStream(seed)
+                          , class    = c('rng-seed', 'integer')
+                          , RNGlevel = 'substream'
+                          )
     }) 
-    seeds
+    structure(seeds, class=c('rng-seeds', 'list'))
 }
 
 #' Call a function continuing the random number stream.
@@ -120,22 +125,25 @@ sprout <- function(seed, n) {
 #' @param cache     use cache, see Caching in \code{\link{harvestr}}
 #' @param cache.dir directory for the cache.
 #' @param time      should results be timed?
+#' @param use.try   Should the call be wrapped in try?
 #' 
 #' @seealso \code{\link{withseed}}, \code{\link{harvest}}, and \code{\link{with}}
 #' @export
 reap <-
 function( x, fun, ...
         , hash      = digest(list(x, fun, ..., source="harvestr::reap"), "md5")
-        , cache     = getOption('harvestr.use.cache', FALSE)
-        , cache.dir = getOption("harvestr.cache.dir", "harvestr-cache")
-        , time      = getOption('harvestr.time', FALSE)) {
+        , cache     = getOption('harvestr.use.cache', defaults$cache())
+        , cache.dir = getOption("harvestr.cache.dir", defaults$cache.dir())
+        , time      = getOption('harvestr.time'     , defaults$time())
+        , use.try   = getOption('harvestr.use.try'  , !interactive())
+        ) {
   seed <- attr(x, "ending.seed")
   if(is.null(seed))
     stop("Could not find a seed value associated with x")
   if(cache){
     cache <- structure(cache, expr.md5 = hash)
   }
-  f <- if(getOption('harvestr.use.try', TRUE)) {
+  f <- if(use.try) {
     function(){try(fun(x,...), getOption('harvestr.try.silent', FALSE))}
   } else {
     function(){fun(x,...)}
@@ -158,15 +166,18 @@ function( x, fun, ...
 #' @param cache should cached results be used or generated?
 #' @param time should results be timed?
 #' @param .parallel should the computations be run in parallel?
+#' @param .progress Show a progress bar?
 #' 
 #' @importFrom plyr llply ldply
 #' @family harvest
 #' @export
 farm <-
-function(seeds, expr, envir = parent.frame(), ...
-        , cache     = getOption('harvestr.use.cache', FALSE)
-        , time      = getOption('harvestr.time'     , FALSE)
-        , .parallel = getOption('harvestr.parallel' , FALSE)){
+function( seeds, expr, envir = parent.frame(), ...
+        , cache     = getOption('harvestr.use.cache', defaults$cache()    )
+        , time      = getOption('harvestr.time'     , defaults$time()     )
+        , .parallel = getOption('harvestr.parallel' , defaults$parallel() )
+        , .progress = getOption('harvestr.progress' , defaults$progress() )
+        ){
   if(is.numeric(seeds) && length(seeds)==1)
     seeds <- gather(seeds)
   fun <- if(is.name(substitute(expr)) && is.function(expr)){
@@ -176,7 +187,8 @@ function(seeds, expr, envir = parent.frame(), ...
     substitute(expr)
   }
   results <- llply(.data=seeds, .fun=withseed, fun, envir=envir, ...
-                  , cache=cache, time=time, .parallel=.parallel)
+                  , cache=cache, time=time
+                  , .parallel=.parallel, .progress=.progress)
   if(time){
       attributes(results)$time <- total_time(results)
   }
@@ -193,6 +205,7 @@ function(seeds, expr, envir = parent.frame(), ...
 #' @param ... passed to \code{fun}
 #' @param time should results be timed?
 #' @param .parallel should the computations be run in parallel?
+#' @param .progress Show a progress bar?
 #' 
 #' @details
 #' harvest is functionaly equivalant to llply, but takes on additional capability when used
@@ -204,9 +217,13 @@ function(seeds, expr, envir = parent.frame(), ...
 #' @export
 harvest <-
 function(.list, fun, ...
-        , time      = getOption('harvestr.time'     , FALSE)
-        , .parallel = getOption('harvestr.parallel' , FALSE)){
-  results <- llply(.list, reap, fun, ..., time =time,  .parallel=.parallel)
+        , time      = getOption('harvestr.time'     , defaults$time()     )
+        , .parallel = getOption('harvestr.parallel' , defaults$parallel() )
+        , .progress = getOption('harvestr.progress' , defaults$progress() )
+        ){
+  results <- llply( .list, reap, fun, ..., time =time
+                  ,  .parallel=.parallel, .progress=.progress
+                  )
   if(getOption('harvestr.try.summary', TRUE)) try_summary(results)
   if(time){
       attributes(results)$time <- total_time(results)
@@ -230,21 +247,9 @@ try_summary <- function(results){
     }
 }
 
-#' Strip attributes from an object.
-#' 
-#' @param x, any object
-#' @seealso \link{attributes}
-#' @export
-noattr <- noattributes <- function(x) {
-  if(is.list(x)){
-    x <- llply(x, noattributes)
-  }
-  attributes(x) <- NULL
-  x
-}
-
 #' Assign elements of a list with seeds
 #' @param .list a list to set seeds on
+#' @param ...   passed to gather to generate seeds.
 #' @param seeds to plant from \code{\link{gather}} or \code{\link{sprout}}
 #'
 #' @description
@@ -256,11 +261,18 @@ noattr <- noattributes <- function(x) {
 #' @family harvest
 #' @export
 plant <-
-function(.list, seeds=gather(length(.list))) {
+function(.list
+        , seeds = gather(length(.list), ...)
+        , ...
+        ) {
     if(inherits(.list, 'data.frame'))
         .list <- mlply(.list, data.frame)
     stopifnot(inherits(.list, 'list'))
     n <- length(.list)
+    if(!inherits(seeds, "rng-seeds")){
+        stopifnot(inherits(seeds, "numeric"))
+        seeds <- gather(n, seed=seeds)
+    }
     stopifnot(n == length(seeds))
     for(i in seq_len(n)){
         attr(.list[[i]],'ending.seed') <- seeds[[i]]
@@ -283,6 +295,39 @@ graft <-
 function(x, n, seeds = sprout(x, n)) 
     plant(replicate(length(seeds), x, F), seeds)
 
+
+branch <-
+function( fun  #< function to apply to x and y[i]
+        , x    #< seeded object
+        , y    #< Vector of first argument
+        , ...  #< additional arguments passed to `<mapply>`.
+        , seeds = sprout(x, length(y))  #< seeds to use.
+        , time      = getOption('harvestr.time'     , defaults$time()     )
+        , .parallel = getOption('harvestr.parallel' , defaults$parallel() )
+        , .progress = getOption('harvestr.progress' , defaults$progress() )
+        ){
+    #! Take an object, `x`, graft it into length(y) sub-streams,
+    #^ then call `fun` with the grafts and corresponding y element.
+    #! function is called as `fun(x,y)`
+
+    buds   <- graft(x, seeds=seeds)
+    shoots <- mapply(list, x=buds, y, ...)
+
+    results <- 
+        llply( shoots, reap, fun, time =time
+             ,  .parallel=.parallel
+             , .progress=.progress
+             )
+    if(getOption('harvestr.try.summary', TRUE)) try_summary(results)
+    if(time){
+        attributes(results)$time <- total_time(results)
+    }
+    structure( results
+             , 'function' = 'harvestr::branch'
+             , class = c('harvestr-results', 'list')
+             )    
+#TODO[Andrew]: Test branch    
+}
     
 #' Apply over rows of a data frame
 #' 
@@ -290,15 +335,26 @@ function(x, n, seeds = sprout(x, n))
 #' @param f     a function
 #' @param ...   additional parameters
 #' @param seeds seeds to use.
+#' @param seed  passed to gather to generate seeds.
+#' @inheritParams harvest
 #' 
 #' @return a list with f applied to each row of df.
 #' 
 #' @importFrom plyr splat
 #' @export
 plow  <-
-function(df, f, ..., seeds=gather(nrow(df))){
+function( df, f, ...
+        , seed=get.seed()
+        , seeds=gather(nrow(df), seed=seed)
+        , time      = getOption('harvestr.time'     , defaults$time()     )
+        , .parallel = getOption('harvestr.parallel' , defaults$parallel() )
+        , .progress = getOption('harvestr.progress' , defaults$progress() )
+       ){
     parameters <- plant(df, seeds=seeds)
-    harvest(parameters, splat(f), ...)
+    structure( harvest( parameters, splat(f), ...
+                      , .parallel=.parallel, .progress=.progress, time=time
+                      )
+             , "function" ="harvestr::plow")
 }
 
 #' Combine results into a data frame
@@ -314,12 +370,12 @@ function(l, .check=T){
     if(.check){
         stopifnot( is_homo(l)
                  , inherits(l, 'list')
-                 , length(l)
+                 , length(l)>0
                  )
-        if(!inherits(l, 'harvestr::results'))
+        if(!inherits(l, 'harvestr-results'))
             warning('bale is intended to be used with harvestr results but got a ', class(l))
     }
-    ldply(l, if(inherits(l[[1]], 'harvestr-results')) bale else I)
+    ldply(l, if(inherits(l[[1]], 'harvestr-results')) bale else as.data.frame)
 }
 
 

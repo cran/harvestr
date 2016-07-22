@@ -44,56 +44,56 @@
 #' @seealso \code{\link{set.seed}}
 #' @export
 withseed <- function(seed, expr, envir=parent.frame()
-                    , cache     = getOption('harvestr.use.cache', FALSE)
-                    , cache.dir = getOption("harvestr.cache.dir", "harvestr-cache")
-                    , time      = getOption('harvestr.time', FALSE)
+                    , cache     = getOption('harvestr.use.cache', defaults$cache()    )
+                    , cache.dir = getOption("harvestr.cache.dir", defaults$cache.dir())
+                    , time      = getOption('harvestr.time'     , defaults$time()     )
                     ){
-  oldseed <- get.seed()
-  on.exit(replace.seed(oldseed))
-  se <- substitute(expr)
-  if(cache){
-    expr.md5 <- attr(cache, 'expr.md5')
-    parent.call <- sys.call(-1)[[1]]
-    if(is.null(expr.md5)){
-      if(is.call(se))
-        expr.md5 <- digest(se , 'md5')
-      else
-        expr.md5 <- digest(expr, 'md5')
+    oldseed <- get.seed()
+    on.exit(replace.seed(oldseed))
+    se <- substitute(expr)
+    if(cache){
+        expr.md5 <- attr(cache, 'expr.md5')
+        parent.call <- sys.call(-1)[[1]]
+        if(is.null(expr.md5)){
+        if(is.call(se))
+            expr.md5 <- digest(se , 'md5')
+        else
+            expr.md5 <- digest(expr, 'md5')
+        }
+        seed.md5 <- digest(seed, 'md5')
+        filename <- paste(expr.md5, '-', seed.md5, ".RData", sep='')
+        cache.file <- file.path(cache.dir, filename)
+        if(file.exists(cache.file)){
+        load(cache.file)
+        return(result)
+        }
     }
-    seed.md5 <- digest(seed, 'md5')
-    filename <- paste(expr.md5, '-', seed.md5, ".RData", sep='')
-    cache.file <- file.path(cache.dir, filename)
-    if(file.exists(cache.file)){
-      load(cache.file)
-      return(result)
-    }
-  }
-  # RNGkind("L'Ecuyer-CMRG", "Inversion")
-  # set.seed(seed, "L'Ecuyer-CMRG", "Inversion")
-  replace.seed(seed)
-  fun <- if(is.name(se)){
-    if(is.function(expr)){
-        stopifnot(is.null(formals(expr)))
-        expr
-    } else if(is.call(expr)) {
-        as.function(list(expr), envir=envir)
+    replace.seed(seed)
+    fun <- if(is.name(se)){
+        if(is.function(expr)){
+            stopifnot(is.null(formals(expr)))
+            expr
+        } else if(is.call(expr)) {
+            as.function(list(expr), envir=envir)
+        } else {
+            eval(substitute(function()expr), envir=envir)
+        }
     } else {
         eval(substitute(function()expr), envir=envir)
     }
-  } else {
-    eval(substitute(function()expr), envir=envir)
-  }
-  if(time) start.time <- proc.time()
-  result <- fun()
-  result <- structure(result,
-    starting.seed = seed,
-    ending.seed   = get.seed(),
-    time=if(time)structure(proc.time() - start.time, class = "proc_time"))
-  if(cache){
-    if(!file.exists(cache.dir)) dir.create(cache.dir)
-    save(result, file=cache.file)
-  }
-  result
+    if(time) start.time <- proc.time()
+    result <- fun()
+    ending.seed <- get.seed()
+    attributes(ending.seed) <- attributes(seed) # will carry forward things like RNGStream level.
+    result <- structure(result,
+        starting.seed = seed,
+        ending.seed   = ending.seed,
+        time=if(time)structure(proc.time() - start.time, class = "proc_time"))
+    if(cache && !inherits(result, 'try-error')){
+        if(!file.exists(cache.dir)) dir.create(cache.dir)
+        save(result, file=cache.file)
+    }
+    result
 }
 
 
@@ -104,10 +104,11 @@ withseed <- function(seed, expr, envir=parent.frame()
 get.seed <- function(){
   if(exists(".Random.seed", envir=.GlobalEnv, mode="numeric")) {
     seed <- get(".Random.seed", envir=.GlobalEnv, inherits=FALSE)
+    class(seed) <- c("rng-seed", "integer")
+    seed
   } else {
-    seed <- NULL
+    NULL
   }
-  seed
 }
 
 #' @rdname seed_funs
@@ -133,9 +134,58 @@ replace.seed <- function(seed, delete=TRUE){
 #' Useful for grabbing a seed used to generate a random object.
 #' 
 #' @return a valid .Random.seed value.
+#' @importFrom stats runif
 GetOrSetSeed<-function(){
-  if(is.null(get.seed())) runif(1)
+  if(is.null(get.seed())) stats::runif(1)
   seed <- .Random.seed
 	seed
 }
+
+
+#' @export
+#' @importFrom utils head tail 
+`format.rng-seed` <- 
+function( x
+        , ...
+        ){
+    if(x[1]==404)
+        paste0("Knuth-TAOCP<", digest(tail(head(x, -1), -1), "xxhash64"), "+", tail(x, 1), ">")
+    else if(x[1]==407)
+        paste0("L'Ecuyer-CMRG<", paste(sprintf("%X", x[-1]), collapse="/"), ">")
+}
+
+#' @export
+`print.rng-seed` <- 
+function( x
+        , ...
+        ){
+    print(format(x))
+}
+
+#' @export
+`format.rng-seeds` <- 
+function( x
+        , ...
+        ){
+    sapply(x, `format.rng-seed`)
+}
+
+#' @export
+`print.rng-seeds` <- 
+function( x                 #< [rng-seeds] object
+        , ...
+        , max.length  = 10  #< maximum length to not truncate
+        , show.length = 6   #< when truncating how many to show
+        ){
+    o <- format(x, ...)
+    if(length(o)>max.length){
+        print(head(o, show.length))
+        cat("+", length(o) - 6, "more, ", length(o), "in total.\n")
+    } else {
+        print(o)
+    }
+    
+}
+
+
 
