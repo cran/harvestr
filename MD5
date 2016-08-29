@@ -1,6 +1,6 @@
-e1378f20db0ae7248f23793ac8cb420f *DESCRIPTION
+86212cf82baf577e4b39835d4cf5d8ce *DESCRIPTION
 4023a5314493b9946e31fd15dc89b19e *NAMESPACE
-2109c1711e2ecf18a78868f48f4842c8 *NEWS
+7b234bc2326a40dfbfaaca841255ad6a *NEWS
 c41feef6f8933fcc378b85b0953e562d *R/Interactive.R
 7738053a2f9386d42e311f8561e24209 *R/attributes.R
 16dc7563d45d5831d09ada1b0d29916f *R/gather.R
@@ -9,6 +9,10 @@ c41feef6f8933fcc378b85b0953e562d *R/Interactive.R
 3afc94996dcf65ccee12713468b72a73 *R/utils.R
 a192900b0f9e8b2717a402f4fb610324 *R/withseed.R
 626b3aa25df779f237e844661ca51d31 *README.md
+2c01f6341b217b4bac9d32e90fa9a66c *build/vignette.rds
+a6d642b3be9711cc2862b14d27483d74 *inst/doc/harvestr.R
+b1b68c2f270468d811be1dd1a925d0a0 *inst/doc/harvestr.Rmd
+72a57ffd95daceab528705e2b1090420 *inst/doc/harvestr.html
 c210f8a995a539f5c627393042b77b70 *inst/examples/cache-timing.R
 3f8c667cd8003d003f27d4fba90e9edf *inst/examples/parallel.R
 cb84d79243c21f36320ca7320645d8b0 *inst/examples/use_method.R
@@ -40,5 +44,5 @@ f8347ac23a002204817e1376dc86072c *tests/testthat/test-seeds.R
 9548a73e3c477e4f783417cd0760a025 *tests/testthat/test-timing.R
 e80223e334f774f5c23fa78101c3cae0 *tests/testthat/test-use_method.R
 779500d0632181c80151548a1cbf6bea *vignettes/c0bfeebb.pdf
-0bb60f68cd08350700e0d47c9f786797 *vignettes/harvestr.Rmd
+b1b68c2f270468d811be1dd1a925d0a0 *vignettes/harvestr.Rmd
 e6b05d5b0231d215d9967f297a024f0c *vignettes/workflow.png
